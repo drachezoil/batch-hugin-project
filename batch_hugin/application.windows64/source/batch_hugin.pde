@@ -12,7 +12,8 @@ Textarea myTextarea;
 Println console;
 int startIndex= 0;
 int endIndex = 0;
-String path;
+int nbrcam =0;
+String path = null;
 String[] lines;
 
 
@@ -21,8 +22,8 @@ void setup() {
   cp5 = new ControlP5(this);
   cp5.enableShortcuts();
   myTextarea = cp5.addTextarea("txt")
-                  .setPosition(50, 100)
-                  .setSize(300, 200)
+                  .setPosition(30, 100)
+                  .setSize(320, 280)
                   .setFont(createFont("", 10))
                   .setLineHeight(14)
                   .setColor(color(200))
@@ -34,51 +35,66 @@ void setup() {
   
   // create a new button
  cp5.addButton("Folder")
-     .setPosition(50,30)
+     .setPosition(30,30)
      .setSize(100,19)
      .setCaptionLabel("Select pto pattern");
      ;  
   cp5.addButton("Start")
-     .setPosition(50,60)
+     .setPosition(30,60)
      .setSize(100,19)
      .setCaptionLabel("Start create pto");
      ;  
   cp5.addTextfield("start_index")
-     .setPosition(200,40)
-     .setSize(70,30)
+     .setPosition(150,30)
+     .setSize(50,20)
      .setFocus(true)
      .setInputFilter(ControlP5.INTEGER)
      .setColorCaptionLabel(255)
      .setLabel("start")
-     .setFont(createFont("arial",16))
+     .setFont(createFont("arial",12))
      ;
                  
   cp5.addTextfield("end_index")
-     .setPosition(280,40)
-     .setSize(70,30)
+     .setPosition(230,30)
+     .setSize(50,20)
      .setInputFilter(ControlP5.INTEGER)
      .setColorCaptionLabel(255)
      .setLabel("End")
-     .setFont(createFont("arial",16))
+     .setFont(createFont("arial",12))
      ;
+     
+  cp5.addTextfield("nbr_camera")
+     .setPosition(300,30)
+     .setSize(50,20)
+     .setInputFilter(ControlP5.INTEGER)
+     .setColorCaptionLabel(255)
+     .setLabel("Img per set")
+     .setFont(createFont("arial",12))
+     ;
+     
+  println("1. Select the path of your pto pattern (you have replace the name of each picture by 0001, 0002, 0003, ...)");
+  println("2. Enter the number of the first and the last index of image set you want to process");
+  println("3. Select the number of picture you have in one set(nbr of camera)");
+  println("4. Hit Start");
 }
 
 void draw() {
   background(240);
+  ellipse(370 ,350,15,15);
 }
 
 public void controlEvent(ControlEvent theEvent) {
-  println(theEvent.getController().getName());
+  //println(theEvent.getController().getName());
 }
 
 // function 
 public void Folder(){
-  selectInput("Select a file to process:", "fileSelected");
+  selectInput("Select the pto pattern:", "fileSelected");
 }
 
 void fileSelected(File selection) {
   if (selection == null) {
-    println("Window was closed or the user hit cancel.");
+    println("Window was closed or the user hit cancel. Please reload the pto.");
   } else {
     path = selection.getAbsolutePath();
     println("User selected " + path);
@@ -91,23 +107,36 @@ void fileSelected(File selection) {
 
 // function 
 public void Start(){
-  startIndex = int(cp5.get(Textfield.class,"start_index").getText());
-  endIndex = int(cp5.get(Textfield.class,"end_index").getText());
   String number ;
   String newPath ;
-  String[] tempLines = loadStrings(path);;
+  String[] tempLines = {};
   
-  for(int i = startIndex; i < endIndex+1; i++) {
-    arrayCopy(lines,tempLines);
-    number = String.format("%03d", i);
-    println(number);
-    tempLines[7] = lines[7].replaceAll("xxx", number);
-    tempLines[9] = lines[9].replaceAll("xxx", number);
-    tempLines[11] = lines[11].replaceAll("xxx", number);
-    tempLines[13] = lines[13].replaceAll("xxx", number);
-    newPath = path.replaceAll("xxx", number);
-    saveStrings(newPath, tempLines);
-    println(newPath);
+  if (path == null){
+    println("Failed to load the pto...");
   }
-  println("done");
+  else{
+    tempLines = loadStrings(path);
+    startIndex = int(cp5.get(Textfield.class,"start_index").getText());
+    endIndex = int(cp5.get(Textfield.class,"end_index").getText());
+    nbrcam = int(cp5.get(Textfield.class,"nbr_camera").getText());
+    if(startIndex>=endIndex && nbrcam==0){
+      println("You haven't enter the index or they are in the wrong order");
+    }
+    else{
+      println("Start");
+      for(int i = startIndex; i < endIndex+1; i++) {
+        arrayCopy(lines,tempLines);
+        number = String.format("%04d", i);
+        println(number);
+        for(int j = 0; j < (nbrcam*2); j+=2){
+          tempLines[j+7] = tempLines[j+7].replaceAll("abcd", number);  //1abcde
+        }
+        newPath = path.replaceAll("xxxx", number);
+        saveStrings(newPath, tempLines);
+        println(newPath);
+      }
+      println("done");
+      fill(#00FF00);
+    }
+  }
 }
